@@ -38,6 +38,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 label{display:block;margin-top:10px;font-size:.9rem}
 input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
 .sec{background:#6b7280}.acts{display:flex;gap:8px;margin-top:14px}.acts button{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ck{display:flex;align-items:center;gap:8px}.ck input{width:auto;margin:0}
 footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
 </style>
 </head>
@@ -56,8 +57,18 @@ footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
     <div id="sum"></div>
     <label>Nome<input id="c_n" required autocomplete="name"></label>
     <label>Telefone / WhatsApp<input id="c_p" required type="tel" autocomplete="tel"></label>
-    <label>Endereço de entrega<input id="c_a" required autocomplete="street-address"></label>
-    <label>Pagamento<select id="c_pg"><option>Pix</option><option>Cartão na entrega</option><option>Dinheiro</option></select></label>
+    <label>CEP<input id="c_cep" required inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code" oninput="cepLookup()"></label>
+    <div id="cepmsg" role="status" style="font-size:.85rem;opacity:.8;min-height:1.1em"></div>
+    <label>Rua<input id="c_rua" required autocomplete="address-line1"></label>
+    <div class="two"><label>Número<input id="c_num" required inputmode="numeric" placeholder="Ex.: 120"></label><label>Bairro<input id="c_bai" required></label></div>
+    <label>Cidade/UF<input id="c_cid" required></label>
+    <label>Ponto de referência (opcional)<input id="c_ref" placeholder="Ex.: casa azul, ao lado da padaria"></label>
+    <label>Pagamento<select id="c_pg" onchange="payUI()"><option>Pix</option><option>Cartão na entrega</option><option>Dinheiro</option></select></label>
+    <div id="tr" class="hidden">
+      <label>Troco para quanto? (R$)<input id="c_tr" type="number" min="0" step="any" inputmode="decimal" placeholder="Ex.: 50" oninput="payUI()"></label>
+      <label class="ck"><input type="checkbox" id="c_nt" onchange="payUI()"> Não preciso de troco</label>
+      <div id="trm" role="status" style="font-size:.9rem;font-weight:600;min-height:1.2em"></div>
+    </div>
     <label>Observações<textarea id="c_o" rows="2"></textarea></label>
     <div class="acts"><button type="button" class="sec" onclick="$('ck').classList.add('hidden')">Voltar</button><button id="sb">Enviar pedido</button></div>
   </form>
@@ -68,7 +79,7 @@ footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
 const CFG={
   store:'Restaurante FERREIRA',
   tagline:'Comida caseira feita com carinho',   // frase abaixo do nome
-  logo:'logo.png.jpeg',   // nome do arquivo da logo enviado ao GitHub (deixe '' para usar a inicial)
+  logo:'logo.png',   // nome do arquivo da logo enviado ao GitHub (deixe '' para usar a inicial)
   whats:'5538988084795',   // WhatsApp da loja com 55 + DDD
   url:'https://npsgeuvqirdtqkygkcck.supabase.co',
   key:'sb_publishable_RRQRm_w4K3L-4af-1n64jQ_YEqk6BBs'
@@ -123,12 +134,24 @@ const total=()=>lines().reduce((s,l)=>s+l.p.price*l.q,0);
 function chg(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);render()}
 function openCk(){
   $('sum').innerHTML=lines().map(l=>`<div style="display:flex;justify-content:space-between"><span>${l.q}× ${esc(l.p.name)}</span><span>${money(l.p.price*l.q)}</span></div>`).join('')+`<hr><b>Total: ${money(total())}</b>`;
-  $('ck').classList.remove('hidden');
+  $('ck').classList.remove('hidden');payUI();
 }
 async function send(e){
   e.preventDefault();
   const items=lines().map(l=>({id:l.p.id,q:l.q}));if(!items.length)return;
-  const o={client:$('c_n').value.trim(),phone:$('c_p').value.trim(),address:$('c_a').value.trim(),payment:$('c_pg').value,notes:$('c_o').value.trim(),items};
+  let pay=$('c_pg').value;
+  if(pay==='Dinheiro'){
+    if($('c_nt').checked)pay='Dinheiro (sem troco)';
+    else{
+      const v=num($('c_tr').value);
+      if(!v){alert('Informe para quanto precisa de troco, ou marque "Não preciso de troco".');return}
+      if(v<total()){alert('O valor para o troco deve ser maior ou igual ao total do pedido.');return}
+      pay='Dinheiro — troco para '+money(v)+' (levar '+money(v-total())+')';
+    }
+  }
+  const ref=$('c_ref').value.trim();
+  const addr=$('c_rua').value.trim()+', '+$('c_num').value.trim()+' - '+$('c_bai').value.trim()+', '+$('c_cid').value.trim()+' — CEP '+$('c_cep').value.trim()+(ref?' — Ref: '+ref:'');
+  const o={client:$('c_n').value.trim(),phone:$('c_p').value.trim(),address:addr,payment:pay,notes:$('c_o').value.trim(),items};
   $('sb').disabled=true;
   try{
     if(CFG.url){
@@ -141,6 +164,28 @@ async function send(e){
     alert('Pedido enviado! Obrigado.');
   }catch(err){alert('Não foi possível enviar o pedido. Tente novamente.')}
   $('sb').disabled=false;
+}
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0};
+function payUI(){
+  const din=$('c_pg').value==='Dinheiro';$('tr').classList.toggle('hidden',!din);
+  const nt=$('c_nt').checked;$('c_tr').disabled=nt;
+  const v=num($('c_tr').value);
+  $('trm').textContent=!din||nt||!v?'':(v<total()?'O valor deve ser maior ou igual ao total ('+money(total())+').':'Troco a levar: '+money(v-total()));
+}
+async function cepLookup(){
+  const el=$('c_cep'),d=el.value.replace(/\D/g,'').slice(0,8),m=$('cepmsg');
+  el.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;
+  if(d.length<8){m.textContent='';return}
+  m.textContent='Buscando endereço…';
+  try{
+    const r=await fetch('https://viacep.com.br/ws/'+d+'/json/');
+    const j=await r.json();
+    if(el.value.replace(/\D/g,'')!==d)return; // o cliente já mudou o CEP
+    if(!r.ok||j.erro)throw 0;
+    $('c_rua').value=j.logradouro||'';$('c_bai').value=j.bairro||'';$('c_cid').value=j.localidade+'/'+j.uf;
+    m.textContent=j.logradouro?'Endereço encontrado. Informe o número.':'Esse CEP não tem rua cadastrada: informe a rua e o bairro.';
+    (j.logradouro?$('c_num'):$('c_rua')).focus();
+  }catch(e){m.textContent='CEP não encontrado. Preencha o endereço manualmente.'}
 }
 init();
 </script>
