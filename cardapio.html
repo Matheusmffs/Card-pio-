@@ -5,31 +5,49 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cardápio</title>
 <style>
-:root{--bg:#faf7f2;--fg:#231f1a;--card:#fff;--line:#e6dfd3;--acc:#b4361c}
-@media(prefers-color-scheme:dark){:root{--bg:#17140f;--fg:#efe9df;--card:#221e17;--line:#3a3328;--acc:#e8643f}}
+:root{--bg:#faf7f2;--fg:#231f1a;--card:#fff;--line:#e6dfd3;--acc:#b4361c;--hero:#7d2410}
+@media(prefers-color-scheme:dark){:root{--bg:#17140f;--fg:#efe9df;--card:#221e17;--line:#3a3328;--acc:#d9532e;--hero:#4a1a0d}}
 *{box-sizing:border-box}
-body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg);padding-bottom:84px}
-header{padding:20px 16px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:1.5rem}
-main{max-width:720px;margin:0 auto;padding:8px 16px}
-h2{margin:24px 0 8px;font-size:1.15rem}
-.it{display:flex;gap:12px;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
-.it p{margin:2px 0;opacity:.75;font-size:.9rem}.pr{font-weight:700}
-.q{display:flex;align-items:center;gap:10px}
-button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff;cursor:pointer}
-.q button{width:38px;padding:8px}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
-#bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg);padding-bottom:90px}
+h1,h2{font-family:Georgia,'Times New Roman',serif}
+.hero{background:var(--hero);color:#fff;padding:28px 16px 22px;text-align:center}
+.logo{width:92px;height:92px;border-radius:50%;border:3px solid #fff;object-fit:cover;background:#fff;display:block;margin:0 auto 10px}
+.ini{display:flex;align-items:center;justify-content:center;font:700 2.4rem Georgia,serif;color:var(--hero)}
+.hero h1{margin:0;font-size:1.7rem}.hero p{margin:6px 0 0;opacity:.9}
+.hero a{display:inline-block;margin-top:12px;color:#fff;border:1px solid #fff9;border-radius:20px;padding:6px 14px;text-decoration:none;font-size:.9rem}
+#cn{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:8px;overflow-x:auto;padding:10px 16px}
+#cn a{white-space:nowrap;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--card);border-radius:20px;padding:7px 14px;font-size:.92rem}
+#cn a:hover{border-color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:4px 16px}
+h2{margin:26px 0 10px;font-size:1.3rem;scroll-margin-top:64px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:12px}
+.it{display:flex;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.tx{display:flex;flex-direction:column;justify-content:space-between;min-width:0;flex:1}
+.tx h3{margin:0 0 4px;font-size:1.02rem}.tx p{margin:0 0 8px;opacity:.75;font-size:.88rem;line-height:1.35}
+.ft{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pr{font-weight:700;font-size:1.05rem}
+.ph{width:112px;height:112px;flex:none;border-radius:12px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:2.2rem}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+button{font:inherit;border:0;border-radius:10px;padding:9px 14px;background:var(--acc);color:#fff;cursor:pointer}
+.q{display:flex;align-items:center;gap:10px}.q button{width:36px;padding:7px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,#cn a:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+#bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:6}
 .hidden{display:none!important}
-.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:12px}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:12px;z-index:9}
 .box{background:var(--card);border-radius:14px;padding:16px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
 label{display:block;margin-top:10px;font-size:.9rem}
 input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
 .sec{background:#6b7280}.acts{display:flex;gap:8px;margin-top:14px}.acts button{flex:1}
+footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
 </style>
 </head>
 <body>
-<header><h1 id="st"></h1></header>
+<header class="hero">
+  <div id="lg"></div><h1 id="st"></h1><p id="tg"></p><a id="wa" class="hidden" target="_blank" rel="noopener">Falar no WhatsApp</a>
+</header>
+<nav id="cn" aria-label="Categorias"></nav>
 <main id="menu"><p>Carregando cardápio…</p></main>
+<footer id="ft"></footer>
 <div id="bar" class="hidden"><span id="bt"></span><button onclick="openCk()">Ver pedido</button></div>
 
 <div id="ck" class="ov hidden" role="dialog" aria-modal="true">
@@ -49,38 +67,56 @@ input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid va
 /* ====== CONFIGURE AQUI ====== */
 const CFG={
   store:'Restaurante FERREIRA',
-  whats:'5538988084795',          // WhatsApp da loja com DDI+DDD, ex.: 5538999999999 (opcional)
-  url:'https://npsgeuvqirdtqkygkcck.supabase.co',            // Supabase: Project URL
-  key:'sb_publishable_RRQRm_w4K3L-4af-1n64jQ_YEqk6BBs'             // Supabase: anon public key
+  tagline:'Comida caseira feita com carinho',   // frase abaixo do nome
+  logo:'logo.png',   // nome do arquivo da logo enviado ao GitHub (deixe '' para usar a inicial)
+  whats:'5538988084795',   // WhatsApp da loja com 55 + DDD
+  url:'https://npsgeuvqirdtqkygkcck.supabase.co',
+  key:'sb_publishable_RRQRm_w4K3L-4af-1n64jQ_YEqk6BBs'
 };
 /* ============================= */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let P=[],cart={};
 // chaves novas do Supabase (sb_publishable_...) não são JWT e não vão no Authorization
 const H=()=>({apikey:CFG.key,...(CFG.key.startsWith('eyJ')?{Authorization:'Bearer '+CFG.key}:{})});
-$('st').textContent=CFG.store;document.title=CFG.store;
+let P=[],cart={};
+
+document.title=CFG.store;$('st').textContent=CFG.store;$('tg').textContent=CFG.tagline||'';
+$('ft').textContent='© '+new Date().getFullYear()+' '+CFG.store;
+if(CFG.whats){const a=$('wa');a.href='https://wa.me/'+CFG.whats;a.classList.remove('hidden')}
+(function(){
+  const ini=()=>{$('lg').innerHTML='<div class="logo ini" aria-hidden="true">'+esc(CFG.store.trim().charAt(0).toUpperCase())+'</div>'};
+  if(!CFG.logo)return ini();
+  const i=new Image();i.className='logo';i.alt='Logo '+CFG.store;i.onerror=ini;i.src=CFG.logo;$('lg').appendChild(i);
+})();
 
 async function init(){
   try{
     if(CFG.url){
       const r=await fetch(CFG.url+'/rest/v1/products?active=eq.true&select=*&order=category,name',{headers:H()});
       if(!r.ok)throw 0;P=await r.json();
-    }else{ // modo demonstração: lê os produtos do sistema salvo neste navegador
-      P=(JSON.parse(localStorage.getItem('delivery_db'))||{products:[]}).products.map(p=>({...p,category:p.cat||'Geral',description:p.desc||''}));
+    }else{ // modo demonstração: lê os produtos do painel salvo neste navegador
+      P=(JSON.parse(localStorage.getItem('delivery_db'))||{products:[]}).products.map(p=>({...p,category:p.cat||'Geral',description:p.desc||'',image:p.img||''}));
     }
   }catch(e){$('menu').innerHTML='<p>Não foi possível carregar o cardápio. Tente novamente em instantes.</p>';return}
   render();
 }
+function card(p){
+  const q=cart[p.id]||0;
+  return `<article class="it"><div class="tx"><div><h3>${esc(p.name)}</h3><p>${esc(p.description)}</p></div>
+  <div class="ft"><span class="pr">${money(p.price)}</span>${q
+    ?`<span class="q"><button aria-label="Remover um ${esc(p.name)}" onclick="chg(${p.id},-1)">−</button><b>${q}</b><button aria-label="Adicionar mais um ${esc(p.name)}" onclick="chg(${p.id},1)">+</button></span>`
+    :`<button onclick="chg(${p.id},1)" aria-label="Adicionar ${esc(p.name)}">Adicionar</button>`}</div></div>
+  <div class="ph">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:'<span aria-hidden="true">🍽️</span>'}</div></article>`;
+}
 function render(){
-  if(!P.length){$('menu').innerHTML='<p>Cardápio vazio por enquanto.</p>';return}
+  if(!P.length){$('menu').innerHTML='<p>Cardápio vazio por enquanto.</p>';$('cn').classList.add('hidden');return}
   const cats=[...new Set(P.map(p=>p.category||'Geral'))];
-  $('menu').innerHTML=cats.map(c=>`<h2>${esc(c)}</h2>`+P.filter(p=>(p.category||'Geral')===c).map(p=>`
-    <div class="it"><div><b>${esc(p.name)}</b><p>${esc(p.description)}</p><span class="pr">${money(p.price)}</span></div>
-    <div class="q"><button aria-label="Remover um" onclick="chg(${p.id},-1)">−</button><b>${cart[p.id]||0}</b><button aria-label="Adicionar um" onclick="chg(${p.id},1)">+</button></div></div>`).join('')).join('');
-  const n=Object.values(cart).reduce((a,b)=>a+b,0),t=total();
-  $('bar').classList.toggle('hidden',!n);$('bt').innerHTML=`<b>${n}</b> item(ns) · <b>${money(t)}</b>`;
+  $('cn').innerHTML=cats.map((c,i)=>`<a href="#c${i}">${esc(c)}</a>`).join('');
+  $('cn').classList.toggle('hidden',cats.length<2);
+  $('menu').innerHTML=cats.map((c,i)=>`<h2 id="c${i}">${esc(c)}</h2><div class="g">`+P.filter(p=>(p.category||'Geral')===c).map(card).join('')+'</div>').join('');
+  const n=Object.values(cart).reduce((a,b)=>a+b,0);
+  $('bar').classList.toggle('hidden',!n);$('bt').innerHTML=`<b>${n}</b> item(ns) · <b>${money(total())}</b>`;
 }
 const lines=()=>P.filter(p=>cart[p.id]>0).map(p=>({p,q:cart[p.id]}));
 const total=()=>lines().reduce((s,l)=>s+l.p.price*l.q,0);
