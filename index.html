@@ -128,10 +128,11 @@ const CFG={
   prazo:{entrega:'30 a 40 min',retirada:''},  // previsão mostrada ao cliente (deixe '' para não mostrar)
   tz:'America/Sao_Paulo',   // fuso do restaurante (horário de Brasília)
   blockClosed:true,         // true = fora do horário não aceita pedidos; false = aceita sempre
-  // Horários de funcionamento. Ordem: domingo, terça, quarta, quinta, sexta, sábado.
+  // Horários de funcionamento. Ordem: domingo, segunda, terça, quarta, quinta, sexta, sábado.
   // Formato 'HH:MM-HH:MM'. Mais de um turno: ['11:00-15:00','18:00-22:00']. Fechado: []
   hours:[
     ['11:00-15:00'],   // domingo
+    ['11:00-15:00'],   // segunda
     ['11:00-15:00'],   // terça
     ['11:00-15:00'],   // quarta
     ['11:00-15:00'],   // quinta
