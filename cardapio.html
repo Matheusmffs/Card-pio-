@@ -58,12 +58,14 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let P=[],cart={};
+// chaves novas do Supabase (sb_publishable_...) não são JWT e não vão no Authorization
+const H=()=>({apikey:CFG.key,...(CFG.key.startsWith('eyJ')?{Authorization:'Bearer '+CFG.key}:{})});
 $('st').textContent=CFG.store;document.title=CFG.store;
 
 async function init(){
   try{
     if(CFG.url){
-      const r=await fetch(CFG.url+'/rest/v1/products?active=eq.true&select=*&order=category,name',{headers:{apikey:CFG.key,Authorization:'Bearer '+CFG.key}});
+      const r=await fetch(CFG.url+'/rest/v1/products?active=eq.true&select=*&order=category,name',{headers:H()});
       if(!r.ok)throw 0;P=await r.json();
     }else{ // modo demonstração: lê os produtos do sistema salvo neste navegador
       P=(JSON.parse(localStorage.getItem('delivery_db'))||{products:[]}).products.map(p=>({...p,category:p.cat||'Geral',description:p.desc||''}));
@@ -94,7 +96,7 @@ async function send(e){
   $('sb').disabled=true;
   try{
     if(CFG.url){
-      const r=await fetch(CFG.url+'/rest/v1/orders',{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+CFG.key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(o)});
+      const r=await fetch(CFG.url+'/rest/v1/orders',{method:'POST',headers:{...H(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(o)});
       if(!r.ok)throw 0;
     }
     const txt=`*Novo pedido — ${CFG.store}*\n`+lines().map(l=>`${l.q}× ${l.p.name}`).join('\n')+`\nTotal: ${money(total())}\nPagamento: ${o.payment}\nCliente: ${o.client} (${o.phone})\nEndereço: ${o.address}`+(o.notes?`\nObs: ${o.notes}`:'');
