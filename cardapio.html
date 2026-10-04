@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cardápio</title>
+<style>
+:root{--bg:#faf7f2;--fg:#231f1a;--card:#fff;--line:#e6dfd3;--acc:#b4361c}
+@media(prefers-color-scheme:dark){:root{--bg:#17140f;--fg:#efe9df;--card:#221e17;--line:#3a3328;--acc:#e8643f}}
+*{box-sizing:border-box}
+body{font-family:system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg);padding-bottom:84px}
+header{padding:20px 16px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:1.5rem}
+main{max-width:720px;margin:0 auto;padding:8px 16px}
+h2{margin:24px 0 8px;font-size:1.15rem}
+.it{display:flex;gap:12px;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.it p{margin:2px 0;opacity:.75;font-size:.9rem}.pr{font-weight:700}
+.q{display:flex;align-items:center;gap:10px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff;cursor:pointer}
+.q button{width:38px;padding:8px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+#bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.hidden{display:none!important}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:12px}
+.box{background:var(--card);border-radius:14px;padding:16px;width:100%;max-width:480px;max-height:92vh;overflow:auto}
+label{display:block;margin-top:10px;font-size:.9rem}
+input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+.sec{background:#6b7280}.acts{display:flex;gap:8px;margin-top:14px}.acts button{flex:1}
+</style>
+</head>
+<body>
+<header><h1 id="st"></h1></header>
+<main id="menu"><p>Carregando cardápio…</p></main>
+<div id="bar" class="hidden"><span id="bt"></span><button onclick="openCk()">Ver pedido</button></div>
+
+<div id="ck" class="ov hidden" role="dialog" aria-modal="true">
+  <form class="box" id="ckf" onsubmit="send(event)">
+    <h2 style="margin-top:0">Seu pedido</h2>
+    <div id="sum"></div>
+    <label>Nome<input id="c_n" required autocomplete="name"></label>
+    <label>Telefone / WhatsApp<input id="c_p" required type="tel" autocomplete="tel"></label>
+    <label>Endereço de entrega<input id="c_a" required autocomplete="street-address"></label>
+    <label>Pagamento<select id="c_pg"><option>Pix</option><option>Cartão na entrega</option><option>Dinheiro</option></select></label>
+    <label>Observações<textarea id="c_o" rows="2"></textarea></label>
+    <div class="acts"><button type="button" class="sec" onclick="$('ck').classList.add('hidden')">Voltar</button><button id="sb">Enviar pedido</button></div>
+  </form>
+</div>
+
+<script>
+/* ====== CONFIGURE AQUI ====== */
+const CFG={
+  store:'Restaurante FERREIRA',
+  whats:'38988084795',          // WhatsApp da loja com DDI+DDD, ex.: 5538999999999 (opcional)
+  url:'https://npsgeuvqirdtqkygkcck.supabase.co',            // Supabase: Project URL
+  key:'sb_publishable_RRQRm_w4K3L-4af-1n64jQ_YEqk6BBs'             // Supabase: anon public key
+};
+/* ============================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+let P=[],cart={};
+$('st').textContent=CFG.store;document.title=CFG.store;
+
+async function init(){
+  try{
+    if(CFG.url){
+      const r=await fetch(CFG.url+'/rest/v1/products?active=eq.true&select=*&order=category,name',{headers:{apikey:CFG.key,Authorization:'Bearer '+CFG.key}});
+      if(!r.ok)throw 0;P=await r.json();
+    }else{ // modo demonstração: lê os produtos do sistema salvo neste navegador
+      P=(JSON.parse(localStorage.getItem('delivery_db'))||{products:[]}).products.map(p=>({...p,category:p.cat||'Geral',description:p.desc||''}));
+    }
+  }catch(e){$('menu').innerHTML='<p>Não foi possível carregar o cardápio. Tente novamente em instantes.</p>';return}
+  render();
+}
+function render(){
+  if(!P.length){$('menu').innerHTML='<p>Cardápio vazio por enquanto.</p>';return}
+  const cats=[...new Set(P.map(p=>p.category||'Geral'))];
+  $('menu').innerHTML=cats.map(c=>`<h2>${esc(c)}</h2>`+P.filter(p=>(p.category||'Geral')===c).map(p=>`
+    <div class="it"><div><b>${esc(p.name)}</b><p>${esc(p.description)}</p><span class="pr">${money(p.price)}</span></div>
+    <div class="q"><button aria-label="Remover um" onclick="chg(${p.id},-1)">−</button><b>${cart[p.id]||0}</b><button aria-label="Adicionar um" onclick="chg(${p.id},1)">+</button></div></div>`).join('')).join('');
+  const n=Object.values(cart).reduce((a,b)=>a+b,0),t=total();
+  $('bar').classList.toggle('hidden',!n);$('bt').innerHTML=`<b>${n}</b> item(ns) · <b>${money(t)}</b>`;
+}
+const lines=()=>P.filter(p=>cart[p.id]>0).map(p=>({p,q:cart[p.id]}));
+const total=()=>lines().reduce((s,l)=>s+l.p.price*l.q,0);
+function chg(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);render()}
+function openCk(){
+  $('sum').innerHTML=lines().map(l=>`<div style="display:flex;justify-content:space-between"><span>${l.q}× ${esc(l.p.name)}</span><span>${money(l.p.price*l.q)}</span></div>`).join('')+`<hr><b>Total: ${money(total())}</b>`;
+  $('ck').classList.remove('hidden');
+}
+async function send(e){
+  e.preventDefault();
+  const items=lines().map(l=>({id:l.p.id,q:l.q}));if(!items.length)return;
+  const o={client:$('c_n').value.trim(),phone:$('c_p').value.trim(),address:$('c_a').value.trim(),payment:$('c_pg').value,notes:$('c_o').value.trim(),items};
+  $('sb').disabled=true;
+  try{
+    if(CFG.url){
+      const r=await fetch(CFG.url+'/rest/v1/orders',{method:'POST',headers:{apikey:CFG.key,Authorization:'Bearer '+CFG.key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(o)});
+      if(!r.ok)throw 0;
+    }
+    const txt=`*Novo pedido — ${CFG.store}*\n`+lines().map(l=>`${l.q}× ${l.p.name}`).join('\n')+`\nTotal: ${money(total())}\nPagamento: ${o.payment}\nCliente: ${o.client} (${o.phone})\nEndereço: ${o.address}`+(o.notes?`\nObs: ${o.notes}`:'');
+    cart={};$('ck').classList.add('hidden');render();
+    if(CFG.whats)window.open('https://wa.me/'+CFG.whats+'?text='+encodeURIComponent(txt),'_blank');
+    alert('Pedido enviado! Obrigado.');
+  }catch(err){alert('Não foi possível enviar o pedido. Tente novamente.')}
+  $('sb').disabled=false;
+}
+init();
+</script>
+</body>
+</html>
