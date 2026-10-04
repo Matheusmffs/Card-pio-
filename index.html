@@ -9,8 +9,8 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Restaurante FERREIRA — Cardápio e pedidos">
 <meta property="og:description" content="Comida caseira feita com carinho. Peça online pelo cardápio.">
-<meta property="og:image" content="https://matheusmffs.github.io/Card-pio-/logo.jpg">
-<meta property="og:url" content="https://matheusmffs.github.io/Card-pio-/">
+<meta property="og:image" content="https://matheusmffs.github.io/ferreira/logo.jpg">
+<meta property="og:url" content="https://matheusmffs.github.io/ferreira/">
 <meta name="twitter:card" content="summary">
 <style>
 :root{--bg:#faf7f2;--fg:#231f1a;--card:#fff;--line:#e6dfd3;--acc:#b4361c;--hero:#7d2410}
@@ -59,6 +59,7 @@ input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid va
 .cl{padding:12px 14px;margin:14px 0 0;background:var(--card);border:1px solid #ef4444;border-radius:12px;font-size:.95rem}
 button:disabled{opacity:.45;cursor:not-allowed}
 .mode{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}#fee{font-size:.9rem;font-weight:600;margin-top:8px;min-height:1.2em}#pk{margin-top:12px;font-size:.9rem;opacity:.85}
+.eta{margin-top:8px;font-size:.92rem}
 footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
 </style>
 </head>
@@ -66,6 +67,7 @@ footer{text-align:center;opacity:.6;font-size:.85rem;padding:24px 16px}
 <header class="hero">
   <div id="lg"></div><h1 id="st"></h1><p id="tg"></p>
   <div id="hs" class="badge" role="status"></div>
+  <div id="eta" class="eta"></div>
   <details id="hrs"><summary>Ver horários de funcionamento</summary><ul id="hl"></ul></details><a id="wa" class="hidden" target="_blank" rel="noopener">Falar no WhatsApp</a>
 </header>
 <nav id="cn" aria-label="Categorias"></nav>
@@ -123,6 +125,7 @@ const CFG={
     freeAbove:0     // entrega grátis a partir de R$ X em pedidos (0 = desligado)
   },
   pickupAddress:'', // endereço para retirada (aparece para o cliente)
+  prazo:{entrega:'30 a 40 min',retirada:''},  // previsão mostrada ao cliente (deixe '' para não mostrar)
   tz:'America/Sao_Paulo',   // fuso do restaurante (horário de Brasília)
   blockClosed:true,         // true = fora do horário não aceita pedidos; false = aceita sempre
   // Horários de funcionamento. Ordem: domingo, segunda, terça, quarta, quinta, sexta, sábado.
@@ -223,7 +226,19 @@ async function send(e){
       const r=await fetch(CFG.url+'/rest/v1/orders',{method:'POST',headers:{...H(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(o)});
       if(!r.ok)throw 0;
     }
-    const txt=`*Novo pedido — ${CFG.store}*\n`+lines().map(l=>`${l.q}× ${l.p.name}`).join('\n')+`\n${MODE==='retirada'?'Retirada no local':'Entrega: '+(FEE==null?'a confirmar':money(FEE))}\nTotal: ${money(grand())}${MODE==='entrega'&&FEE==null?' + taxa de entrega':''}\nPagamento: ${o.payment}\nCliente: ${o.client} (${o.phone})\n${MODE==='retirada'?'Cliente vai retirar no local':'Endereço: '+o.address}`+(o.notes?`\nObs: ${o.notes}`:'');
+    const L=lines(),tempo=CFG.prazo&&CFG.prazo[MODE],v=id=>$(id).value.trim();
+    const txt=[
+      '🍽️ *NOVO PEDIDO* — '+CFG.store,'',
+      '*Itens*',...L.map(l=>'• '+l.q+'× '+l.p.name+' — '+money(l.p.price*l.q)),'',
+      '*Valores*','Subtotal: '+money(total()),
+      MODE==='retirada'?'Retirada no local: grátis':'Entrega: '+(FEE==null?'a confirmar':(FEE===0?'grátis':money(FEE)))+(KM?' ('+KM.toLocaleString('pt-BR')+' km)':''),
+      '*Total: '+money(grand())+'*'+(MODE==='entrega'&&FEE==null?' + taxa de entrega':''),'',
+      '*Pagamento:* '+o.payment,'',
+      '*Cliente:* '+o.client,'*Telefone:* '+o.phone,
+      ...(MODE==='retirada'?['*Receber:* cliente vai retirar no local']:['*Endereço:* '+v('c_rua')+', '+v('c_num')+' - '+v('c_bai')+', '+v('c_cid'),'*CEP:* '+v('c_cep'),...(ref?['*Referência:* '+ref]:[])]),
+      ...(o.notes?['*Observações:* '+o.notes]:[]),
+      ...(tempo?['','⏱️ Previsão: '+tempo]:[])
+    ].join('\n');
     cart={};$('ck').classList.add('hidden');render();
     if(CFG.whats)window.open('https://wa.me/'+CFG.whats+'?text='+encodeURIComponent(txt),'_blank');
     alert('Pedido enviado! Obrigado.');
@@ -302,7 +317,7 @@ function sumUI(){
   const row=(a,b)=>`<div style="display:flex;justify-content:space-between"><span>${a}</span><span>${b}</span></div>`;
   const fl=MODE==='retirada'?'Grátis':({idle:'informe o endereço',calc:'calculando…',ok:FEE===0?'Grátis':money(FEE),pending:'a confirmar',fora:'—'})[FEEST];
   $('sum').innerHTML=lines().map(l=>row(l.q+'× '+esc(l.p.name),money(l.p.price*l.q))).join('')+'<hr>'+row('Subtotal',money(total()))+row(MODE==='retirada'?'Retirada no local':'Entrega',fl)
-    +`<div style="display:flex;justify-content:space-between;font-weight:700;margin-top:6px"><span>Total</span><span>${money(grand())}</span></div>`;
+    +`<div style="display:flex;justify-content:space-between;font-weight:700;margin-top:6px"><span>Total</span><span>${money(grand())}</span></div>`+(CFG.prazo&&CFG.prazo[MODE]?`<div style="margin-top:8px;font-size:.9rem;opacity:.85">⏱️ Previsão: ${esc(CFG.prazo[MODE])}</div>`:'');
 }
 function setFee(st,fee=null,km=null,msg=''){FEEST=st;FEE=fee;KM=km;$('fee').textContent=msg;sumUI();payUI()}
 function schedFee(){clearTimeout(tmr);FEEST='idle';FEE=null;KM=null;sumUI();tmr=setTimeout(calcFee,900)}
@@ -331,6 +346,7 @@ function setMode(m){
   if(m==='entrega')schedFee();else{sumUI();payUI()}
 }
 ['c_rua','c_num','c_bai','c_cid'].forEach(id=>$(id).addEventListener('input',schedFee));
+$('eta').textContent=[CFG.prazo&&CFG.prazo.entrega?'🛵 Entrega em '+CFG.prazo.entrega:'',CFG.prazo&&CFG.prazo.retirada?'🛍️ Retirada em '+CFG.prazo.retirada:''].filter(Boolean).join(' · ');
 updateStatus();setInterval(updateStatus,60000);
 init();
 </script>
